@@ -64,7 +64,7 @@ public class Controller {
         }
     }
 
-    @PostMapping("/user/login")
+    @PostMapping("/login")
     public AuthResponse loginUser(@RequestBody AuthRequest authRequest) {
         Authentication authentication = authenticationManager.authenticate(new
                 UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));

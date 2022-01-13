@@ -57,8 +57,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 //                allowForRefreshToken(ex, request);
 //            } else
                 request.setAttribute("exception", ex);
-        } catch (BadCredentialsException ex) {
-            request.setAttribute("exception", ex);
+//        } catch (BadCredentialsException ex) {
+//            request.setAttribute("exception", ex);
         } catch (SignatureException ex) {
             request.setAttribute("exceptions", ex);
         }

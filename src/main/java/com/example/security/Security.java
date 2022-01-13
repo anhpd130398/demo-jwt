@@ -31,8 +31,8 @@ public class Security extends WebSecurityConfigurerAdapter {
     @Autowired
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-    @Bean
-    public UserDetailsService userDetailsService() {
+    @Autowired
+    public UserService userDetailsService() {
         return new UserService();
     }
 
@@ -46,7 +46,7 @@ public class Security extends WebSecurityConfigurerAdapter {
         auth.userDetailsService(userDetailsService()).passwordEncoder(passwordEncoder());
     }
 
-    @Bean(name = BeanIds.AUTHENTICATION_MANAGER)
+    @Bean
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
@@ -55,7 +55,7 @@ public class Security extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable().authorizeRequests()
-                .antMatchers("/register/**").permitAll()
+                .antMatchers("/register/**","/login").permitAll()
                 .antMatchers("/admin/**").hasAnyRole("ADMIN", "USER")
                 .antMatchers("/user/**").hasRole("USER")
                 .anyRequest().authenticated()
