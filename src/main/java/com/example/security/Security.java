@@ -16,37 +16,44 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true,
-        securedEnabled = false,
-        jsr250Enabled = false)
+//@EnableGlobalMethodSecurity(prePostEnabled = true,
+//        securedEnabled = false,
+//        jsr250Enabled = false)
+@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class Security extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
 
     @Autowired
+    UserDetailsService userDetailsService;
+
+    @Autowired
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return new UserService();
-    }
+//    @Bean
+//    public UserDetailsService userDetailsService() {
+//        return new UserService();
+//    }
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        return new BCryptPasswordEncoder(
 
+        );
+    }
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService()).passwordEncoder(passwordEncoder());
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
     }
 
-    @Bean(name = BeanIds.AUTHENTICATION_MANAGER)
+    @Bean
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
@@ -55,7 +62,7 @@ public class Security extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable().authorizeRequests()
-                .antMatchers("/register/**").permitAll()
+                .antMatchers("/register/**","/login").permitAll()
                 .antMatchers("/admin/**").hasAnyRole("ADMIN", "USER")
                 .antMatchers("/user/**").hasRole("USER")
                 .anyRequest().authenticated()

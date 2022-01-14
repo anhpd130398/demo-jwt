@@ -2,6 +2,7 @@ package com.example.jwt;
 
 import com.example.service.CustomUserDetails;
 import io.jsonwebtoken.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
@@ -11,65 +12,44 @@ import java.util.*;
 import java.util.function.Function;
 
 @Service
+@Slf4j
 public class JwtUtils {
     private final static String SECRET = "pda123";
 
-    public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
-    }
-
-    public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
-
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
-    }
-
-    private Claims extractAllClaims(String token) {
-        return Jwts.parser().
-                setSigningKey(SECRET).
-                parseClaimsJws(token).
-                getBody();
-    }
-
-
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
-    public String doGenerateRefreshToken(CustomUserDetails user) {
+    public String generateToken(CustomUserDetails userDetails) {
         Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + 6 * 1000L);
         return Jwts.builder()
-                .setSubject(user.getUsername())
+                .setSubject(userDetails.getUsername())
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + (24 * 60 * 60 * 1000L)))
-                .signWith(SignatureAlgorithm.HS512, SECRET).compact();
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS512, SECRET)
+                .compact();
     }
 
-    public String generateToken(CustomUserDetails user) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("name", user.getUsername());
-        claims.put("password",user.getPassword());
-        claims.put("token",user.getAuthorities());
-        return accessToken(claims, user);
+    public String getUserNameFromJWT(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(SECRET)
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.getSubject();
     }
 
-    private String accessToken(Map<String, Object> claims, CustomUserDetails user) {
-        Date now = new Date();
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(user.getUsername())
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + (6 * 1000L)))
-                .signWith(SignatureAlgorithm.HS512, SECRET).
-                compact();
-    }
-
-    public Boolean validateToken(String token, CustomUserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    public boolean validateToken(String authToken) {
+        try {
+            Jwts.parser().setSigningKey(SECRET).parseClaimsJws(authToken);
+            return true;
+        } catch (MalformedJwtException ex) {
+            log.error("Invalid JWT token");
+        } catch (ExpiredJwtException ex) {
+            log.error("Expired JWT token");
+        } catch (UnsupportedJwtException ex) {
+            log.error("Unsupported JWT token");
+        } catch (IllegalArgumentException ex) {
+            log.error("JWT claims string is empty.");
+        }
+        return false;
     }
 
 

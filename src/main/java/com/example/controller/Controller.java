@@ -16,7 +16,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -64,12 +66,16 @@ public class Controller {
         }
     }
 
-    @PostMapping("/user/login")
+    @PostMapping("/login")
     public AuthResponse loginUser(@RequestBody AuthRequest authRequest) {
-        Authentication authentication = authenticationManager.authenticate(new
+        authenticationManager.authenticate(new
                 UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = jwtUtils.generateToken((CustomUserDetails) authentication.getPrincipal());
+        UserDetails userDetails = userService.loadUserByUsername(authRequest.getUsername());
+        String token = jwtUtils.generateToken((CustomUserDetails) userDetails);
+        String userName = jwtUtils.getUserNameFromJWT(token);
+        Users users = userRepo.getByUserName(userName);
+        users.setToken(token);
+        userRepo.save(users);
         AuthResponse authResponse = new AuthResponse();
         authResponse.setToken(token);
         return authResponse;
