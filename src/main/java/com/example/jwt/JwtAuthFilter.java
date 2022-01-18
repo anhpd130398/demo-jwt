@@ -1,10 +1,12 @@
 package com.example.jwt;
 
+import com.example.service.CustomUserDetails;
 import com.example.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -19,7 +21,7 @@ import java.io.IOException;
 
 @Component
 @Slf4j
-public class JwtAuthFilter extends OncePerRequestFilter {
+public class    JwtAuthFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtils jwtUtils;
@@ -30,17 +32,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
-            // Lấy jwt từ request
             String jwt = getJwtFromRequest(request);
             if (StringUtils.hasText(jwt) && jwtUtils.validateToken(jwt)) {
-                String userName= jwtUtils.getUserNameFromJWT(jwt);
-                UserDetails userDetails = userServices.loadUserByUsername(userName);
-                if (userDetails != null) {
+                String userName = jwtUtils.getUserNameFromJWT(jwt);
+                UserDetails userDetails = new CustomUserDetails(userName, "", jwtUtils.getRolesFromToken(jwt));
                     UsernamePasswordAuthenticationToken
                             authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                }
+
             }
         } catch (Exception ex) {
             log.error("failed on set user authentication", ex);

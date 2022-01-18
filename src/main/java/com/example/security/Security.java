@@ -22,25 +22,18 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-//@EnableGlobalMethodSecurity(prePostEnabled = true,
-//        securedEnabled = false,
-//        jsr250Enabled = false)
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class Security extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
 
-    @Autowired
-    UserDetailsService userDetailsService;
 
     @Autowired
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-//    @Bean
-//    public UserDetailsService userDetailsService() {
-//        return new UserService();
-//    }
+    @Autowired
+    public UserDetailsService userDetailsService;
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -48,6 +41,7 @@ public class Security extends WebSecurityConfigurerAdapter {
 
         );
     }
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
@@ -61,15 +55,15 @@ public class Security extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable().authorizeRequests()
-                .antMatchers("/register/**","/login").permitAll()
-                .antMatchers("/admin/**").hasAnyRole("ADMIN", "USER")
-                .antMatchers("/user/**").hasRole("USER")
-                .anyRequest().authenticated()
-                .and().exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http.cors().and().csrf().disable().
+                sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .authorizeRequests()
+                .antMatchers("/register/**", "/login/**").permitAll()
+//                .antMatchers("/admin/**").hasAnyRole("ADMIN", "USER")
+//                .antMatchers("/user/**").hasRole("USER")
+                .anyRequest().authenticated().and().exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
 
-
+        ;
 
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
     }

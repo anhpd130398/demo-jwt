@@ -11,6 +11,7 @@ import com.example.repository.UserRepo;
 import com.example.service.CustomUserDetails;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -71,9 +72,9 @@ public class Controller {
         authenticationManager.authenticate(new
                 UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
         UserDetails userDetails = userService.loadUserByUsername(authRequest.getUsername());
-        String token = jwtUtils.generateToken((CustomUserDetails) userDetails);
-        String userName = jwtUtils.getUserNameFromJWT(token);
-        Users users = userRepo.getByUserName(userName);
+        String token = jwtUtils.generateToken(userDetails);
+//        String userName = jwtUtils.getUserNameFromJWT(token);
+        Users users = new Users();
         users.setToken(token);
         userRepo.save(users);
         AuthResponse authResponse = new AuthResponse();
@@ -82,7 +83,7 @@ public class Controller {
     }
 
 
-    @GetMapping("/user")
+    @GetMapping("/list")
     public List<Users> getList() {
         return userRepo.findAll();
     }

@@ -12,7 +12,6 @@ import java.util.*;
 @Data
 public class CustomUserDetails implements UserDetails {
 
-    Users users;
     private String username;
     private String password;
     private Collection<? extends GrantedAuthority> authorities;
@@ -22,6 +21,15 @@ public class CustomUserDetails implements UserDetails {
         this.username = username;
         this.password = password;
         this.authorities = authorities;
+    }
+
+    public static CustomUserDetails build(Users users) {
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        Set<Roles> roles = users.getRoles();
+        for (Roles roleSet : roles) {
+            authorities.add(new SimpleGrantedAuthority(roleSet.getName()));
+        }
+        return new CustomUserDetails(users.getUsername(), users.getPassword(), authorities);
     }
 
     @Override
